@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="api-base-url" content="http://localhost:3000">
+    <title>Manage Profile - CV Generator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main class="login-wrapper profile-wrapper">
+        <div class="header">
+            <h1>Manage Profile</h1>
+            <p>Update your account details and password.</p>
+        </div>
+        <div class="card">
+            <form id="profile-form">
+                <div class="input-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" autocomplete="username" required>
+                </div>
+                <div class="input-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" autocomplete="name" required>
+                </div>
+                <div class="input-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" autocomplete="email" required>
+                </div>
+                <hr class="form-divider">
+                <h2 class="password-heading">Change Password (optional)</h2>
+                <div class="input-group">
+                    <label for="new-password">New Password</label>
+                    <input type="password" id="new-password" autocomplete="new-password" minlength="8">
+                </div>
+                <div class="input-group">
+                    <label for="confirm-password">Confirm New Password</label>
+                    <input type="password" id="confirm-password" autocomplete="new-password" minlength="8">
+                </div>
+                <div class="input-group">
+                    <label for="current-password">Current Password (required to save changes)</label>
+                    <input type="password" id="current-password" autocomplete="current-password" required>
+                </div>
+                <p id="form-message" class="form-message" role="status" aria-live="polite"></p>
+                <button type="submit" class="btn-primary" id="submit-button">Save Changes</button>
+            </form>
+            <section class="danger-zone" aria-labelledby="delete-account-heading">
+                <h2 id="delete-account-heading">Delete Account</h2>
+                <p>This permanently deletes your account and all saved CVs. This action cannot be undone.</p>
+                <form id="delete-account-form">
+                    <div class="input-group">
+                        <label for="delete-current-password">Current Password</label>
+                        <input type="password" id="delete-current-password" autocomplete="current-password" required>
+                    </div>
+                    <p id="delete-message" class="form-message" role="status" aria-live="polite"></p>
+                    <button type="submit" class="btn-delete-account" id="delete-account-button" disabled>Delete My Account</button>
+                </form>
+            </section>
+        </div>
+        <div class="footer-link">
+            <a href="home.html">Back to Dashboard</a>
+        </div>
+    </main>
+    <script src="auth.js"></script>
+    <script>
+        const form = document.getElementById('profile-form');
+        const message = document.getElementById('form-message');
+        const submitButton = document.getElementById('submit-button');
+        const deleteForm = document.getElementById('delete-account-form');
+        const deleteButton = document.getElementById('delete-account-button');
+        submitButton.disabled = true;
+
+        function showCachedProfile() {
+            document.getElementById('username').value = localStorage.getItem('loggedInUsername') || '';
+            document.getElementById('name').value = localStorage.getItem('loggedInUser') || '';
+            document.getElementById('email').value = localStorage.getItem('loggedInEmail') || '';
+        }
+
+        async function loadProfile() {
+            try {
+                const sessionResponse = await apiRequest('/api/session');
+                if (sessionResponse.status === 401) {
+                    window.location.replace('Index.html');
+                    return;
+                }
+                if (!sessionResponse.ok) throw new Error('Could not verify your login session.');
+                const response = await apiRequest('/api/profile');
+                const contentType = response.headers.get('content-type') || '';
+                if (!contentType.includes('application/json')) {
+                    throw new Error('The account service returned an invalid response.');
+                }
+                const profile = await response.json();
+                if (!response.ok) throw new Error(profile.error || 'Could not load account details.');
+                document.getElementById('username').value = profile.username;
+                document.getElementById('name').value = profile.name;
+                document.getElementById('email').value = profile.email;
+                submitButton.disabled = false;
+                deleteButton.disabled = false;
+            } catch (error) {
+                console.error('Profile load failed:', error);
+                showCachedProfile();
+                message.textContent = 'Could not verify your login session. Reconnect to the server before making account changes.';
+                message.classList.add('error');
+            }
+        }
+        loadProfile();
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            message.textContent = '';
+            message.className = 'form-message';
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            if (newPassword !== confirmPassword) {
+                message.textContent = 'New passwords do not match.';
+                message.classList.add('error');
+                return;
+            }
+
+            submitButton.disabled = true;
+            try {
+                const payload = {
+                    username: document.getElementById('username').value,
+                    name: document.getElementById('name').value,
+                    email: document.getElementById('email').value,
+                    currentPassword: document.getElementById('current-password').value,
+                    newPassword
+                };
+                const response = await apiRequest('/api/profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Could not update your account.');
+
+                localStorage.setItem('loggedInUsername', result.username);
+                localStorage.setItem('loggedInUser', result.userName);
+                localStorage.setItem('loggedInEmail', result.email);
+                document.getElementById('current-password').value = '';
+                document.getElementById('new-password').value = '';
+                document.getElementById('confirm-password').value = '';
+                message.textContent = result.message;
+                message.classList.add('success');
+            } catch (error) {
+                console.error('Profile update failed:', error);
+                message.textContent = error.message || 'Could not connect to the server.';
+                message.classList.add('error');
+            } finally {
+                submitButton.disabled = false;
+            }
+        });
+
+        deleteForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const deleteMessage = document.getElementById('delete-message');
+            deleteMessage.textContent = '';
+            deleteMessage.className = 'form-message';
+            if (!window.confirm('Permanently delete your account and every saved CV? This cannot be undone.')) return;
+
+            deleteButton.disabled = true;
+            try {
+                const response = await apiRequest('/api/profile', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        currentPassword: document.getElementById('delete-current-password').value
+                    })
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Could not delete your account.');
+
+                clearApiSessionState();
+                ['loggedInUser', 'loggedInUsername', 'loggedInEmail', 'guestCVData']
+                    .forEach(key => localStorage.removeItem(key));
+                alert(result.message || 'Account deleted successfully.');
+                window.location.replace('Index.html');
+            } catch (error) {
+                console.error('Account deletion failed:', error);
+                deleteMessage.textContent = error.message || 'Could not connect to the server.';
+                deleteMessage.classList.add('error');
+                deleteButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

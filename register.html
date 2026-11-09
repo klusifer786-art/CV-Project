@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="api-base-url" content="http://localhost:3000">
+    <title>CV Generator - Create Account</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="login-wrapper">
+        <!-- Header Section -->
+        <div class="header">
+            <div class="logo-placeholder">
+                <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="Logo">
+            </div>
+            <h1>Create an Account</h1>
+            <p>Start building your professional CV today</p>
+        </div>
+
+        <!-- Form Card -->
+        <div class="card">
+                        <form action="#" autocomplete="on">
+                <!-- Username Input (NEW) -->
+                <div class="input-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" autocomplete="username" placeholder="e.g. kasun123">
+                </div>
+
+                <!-- Full Name Input -->
+                <div class="input-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" name="name" autocomplete="name" placeholder="John Doe">
+                </div>
+
+                <!-- Email Input -->
+                <div class="input-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" autocomplete="email" placeholder="name@example.com">
+                </div>
+                
+
+                <!-- Password Input -->
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" autocomplete="new-password" placeholder="••••••••">
+                </div>
+
+                <!-- Confirm Password Input -->
+                <div class="input-group">
+                    <label for="confirm-password">Confirm Password</label>
+                    <input type="password" id="confirm-password" name="confirm-password" autocomplete="new-password" placeholder="••••••••">
+                </div>
+
+                <!-- Register Button -->
+                <button type="submit" class="btn-primary">Sign Up</button>
+                
+            </form>
+        </div>
+
+        <!-- Footer Link -->
+        <div class="footer-link">
+            Already have an account? <a href="index.html">Log in</a>
+        </div>
+    </div>
+    <script src="auth.js"></script>
+    <script>
+        // Listen for the form submission
+        document.querySelector('form').addEventListener('submit', async (e) => {
+            e.preventDefault(); // Stop the page from refreshing
+
+                       // Get the values from the inputs
+            const username = document.getElementById('username').value;
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+
+            // Check if passwords match
+            if (password !== confirmPassword) {
+                alert("Passwords do not match!");
+                return;
+            }
+
+            try {
+                // Send the data to the Backend Server
+                const response = await apiRequest('/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, name, email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Success!
+                    alert("Account created successfully! You can now log in.");
+                    window.location.href = 'index.html'; // Redirect to login
+                } else {
+                    // Error (e.g., email already exists)
+                    alert(data.error);
+                }
+            } catch (error) {
+                console.error("Error connecting to server:", error);
+                alert("Could not connect to the server. Is it running?");
+            }
+        });
+    </script>
+</body>
+</html>

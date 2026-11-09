@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="api-base-url" content="http://localhost:3000">
+    <title>CV Editor</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body class="editor-body">
+
+            <div class="sidebar">
+        <h1>CV Editor</h1>
+        <ul class="nav-links">
+            <li class="active" id="tab-personal" onclick="switchTab('personal')"><a href="javascript:void(0)">Personal Info</a></li>
+            <div id="nav-item-experience">
+                <li id="tab-experience" onclick="switchTab('experience')"><a href="javascript:void(0)">Experience</a></li>
+            </div>
+            <li id="tab-education" onclick="switchTab('education')"><a href="javascript:void(0)">Education</a></li>
+            <li id="tab-skills" onclick="switchTab('skills')"><a href="javascript:void(0)">Skills</a></li>
+            <li class="advanced-only" id="tab-projects" onclick="switchTab('projects')"><a href="javascript:void(0)">Projects & Links</a></li>
+        </ul>
+        
+                <div class="sidebar-bottom">
+            <!-- SAVE BUTTON (Hidden by default) -->
+            <button type="button" class="btn-primary" id="save-btn" style="display: none; background-color: #10b981;">
+                💾 Save Progress
+            </button>
+
+            <!-- DOWNLOAD BUTTON -->
+            <button type="button" class="btn-primary" id="download-btn">
+                Download PDF
+            </button>
+
+                        <!-- EXIT BUTTON -->
+            <a href="javascript:void(0)" id="exit-btn" class="btn-secondary" style="color: #ff4d4d; border-color: #ff4d4d;">
+                Exit Guest Mode
+            </a>
+        </div>
+    </div>
+
+    <!-- 2. FORM PANEL -->
+    <div class="editor-panel">
+        <div id="section-personal" class="form-section">
+            <h2>Personal Information</h2>
+            <p style="color: #8b9bb4; margin-bottom: 20px;">Customize your resume details below.</p>
+            <div class="form-row">
+                <div class="input-group"><label>Full Name</label><input type="text" id="input-name" placeholder="e.g. John Smith"></div>
+                <div class="input-group"><label>Email</label><input type="email" id="input-email" placeholder="e.g. john@example.com"></div>
+            </div>
+            <div class="form-row">
+                <div class="input-group"><label>Phone Number</label><input type="text" id="input-phone" placeholder="e.g. +1 (555) 000-0000"></div>
+                <div class="input-group"><label>Location</label><input type="text" id="input-location" placeholder="e.g. New York, NY"></div>
+            </div>
+            <div class="input-group"><label>Professional Summary</label><textarea id="input-summary" rows="4" placeholder="Write a brief summary..."></textarea></div>
+            <div class="input-group cv-photo-controls">
+                <label for="input-photo">CV photo (optional)</label>
+                <input type="file" id="input-photo" accept="image/jpeg,image/png,image/webp">
+                <small>Portrait crop using 35:45 proportions, similar to a Sri Lankan passport photo. CV photo dimensions are not officially prescribed.</small>
+                <div id="photo-crop-controls" style="display: none;">
+                    <div class="photo-crop-frame" id="photo-crop-frame" aria-label="Drag the photo to reposition its crop">
+                        <img id="photo-crop-preview" class="photo-crop-image" alt="Photo crop preview">
+                    </div>
+                    <small>Drag the photo to reposition it, or use the controls.</small>
+                    <label for="photo-zoom">Zoom</label>
+                    <input type="range" id="photo-zoom" min="1" max="2.5" step="0.05" value="1" aria-label="Photo zoom">
+                    <label for="photo-horizontal">Move left / right</label>
+                    <input type="range" id="photo-horizontal" min="0" max="100" step="1" value="50" aria-label="Move photo left or right">
+                    <label for="photo-vertical">Move up / down</label>
+                    <input type="range" id="photo-vertical" min="0" max="100" step="1" value="50" aria-label="Move photo up or down">
+                    <button type="button" class="btn-secondary" id="reset-photo-crop-btn">Reset crop</button>
+                </div>
+                <button type="button" class="btn-secondary" id="remove-photo-btn" style="display: none;">Remove photo</button>
+                <small id="photo-error" role="alert" aria-live="polite"></small>
+            </div>
+        </div>
+
+        <div id="section-experience" class="form-section" style="display: none;">
+            <h2>Experience</h2>
+            <p style="color: #8b9bb4; margin-bottom: 20px;">Add your work history.</p>
+            <div class="repeatable-entry" id="primary-experience">
+                <div class="input-group"><label>Job Title</label><input type="text" id="input-job-title" placeholder="e.g. Frontend Engineer"></div>
+                <div class="form-row">
+                    <div class="input-group"><label>Company</label><input type="text" id="input-company" placeholder="e.g. Tech Corp"></div>
+                    <div class="input-group"><label>Dates</label><input type="text" id="input-dates" placeholder="e.g. 2021 - Present"></div>
+                </div>
+                <div class="input-group"><label>Description (Bullet points)</label><textarea id="input-job-desc" rows="3" placeholder="Enter each achievement on a new line..."></textarea></div>
+            </div>
+            <div id="experience-extra-list"></div>
+            <button type="button" class="btn-secondary advanced-only add-entry" data-add-entry="experience">+ Add another position</button>
+        </div>
+
+        <div id="section-education" class="form-section" style="display: none;">
+            <h2>Education</h2>
+            <p style="color: #8b9bb4; margin-bottom: 20px;">Add your academic background.</p>
+            <div class="repeatable-entry" id="primary-education">
+                <div class="input-group"><label>Degree / Education</label><input type="text" id="input-education" placeholder="e.g. Bachelor of Science"></div>
+                <div class="input-group advanced-only"><label>School / Institution</label><input type="text" id="input-education-school" placeholder="e.g. City University"></div>
+                <div class="input-group advanced-only"><label>Dates</label><input type="text" id="input-education-dates" placeholder="e.g. 2022 - 2025"></div>
+            </div>
+            <div id="education-extra-list"></div>
+            <button type="button" class="btn-secondary advanced-only add-entry" data-add-entry="education">+ Add another qualification</button>
+        </div>
+
+        <div id="section-skills" class="form-section" style="display: none;">
+            <h2>Skills</h2>
+            <p style="color: #8b9bb4; margin-bottom: 20px;">Add your skills separated by commas.</p>
+            <div class="input-group"><label>Skills</label><textarea id="input-skills" rows="3" placeholder="e.g. JavaScript, React, Node.js"></textarea></div>
+        </div>
+
+        <div id="section-projects" class="form-section" style="display: none;">
+            <h2>Projects & Links</h2>
+            <p style="color: #8b9bb4; margin-bottom: 20px;">Highlight selected projects and professional links.</p>
+            <div id="project-extra-list"></div>
+            <button type="button" class="btn-secondary add-entry" data-add-entry="project">+ Add a project</button>
+            <h3 class="entry-subheading">Portfolio & Professional Links</h3>
+            <div id="link-extra-list"></div>
+            <button type="button" class="btn-secondary add-entry" data-add-entry="link">+ Add a link</button>
+        </div>
+    </div>
+
+    <!-- 3. PREVIEW PANEL -->
+    <div class="preview-panel">
+        <div class="paper">
+            <header class="cv-header">
+                <h2 id="preview-name">Your Name</h2>
+                <div id="preview-photo-frame" class="photo-crop-frame cv-photo-frame" style="display: none;">
+                    <img id="preview-photo" class="photo-crop-image" alt="CV profile photo">
+                </div>
+            </header>
+            <div class="cv-layout">
+                <aside class="cv-sidebar">
+                    <section class="cv-section cv-side-section" id="preview-contact-section">
+                        <h3>CONTACT</h3>
+                        <p class="contact-info" id="preview-contact">Email • Phone • Location</p>
+                    </section>
+                    <section class="cv-section cv-side-section" id="preview-skills-section">
+                        <h3>SKILLS</h3>
+                        <ul class="cv-skills" id="preview-skills"></ul>
+                    </section>
+                    <section class="cv-section cv-side-section" id="preview-links-section" style="display: none;">
+                        <h3>LINKS</h3>
+                        <div id="preview-link-list"></div>
+                    </section>
+                </aside>
+                <main class="cv-main">
+                    <section class="cv-section" id="preview-summary-section">
+                        <h3>PROFILE</h3>
+                        <p id="preview-summary">Your professional summary will appear here...</p>
+                    </section>
+                    <section class="cv-section" id="preview-experience-section">
+                        <h3>EXPERIENCE</h3>
+                        <div id="preview-experience-list"></div>
+                    </section>
+                    <section class="cv-section" id="preview-education-section">
+                        <h3>EDUCATION</h3>
+                        <div id="preview-education-list"></div>
+                    </section>
+                    <section class="cv-section" id="preview-projects-section" style="display: none;">
+                        <h3>PROJECTS</h3>
+                        <div id="preview-project-list"></div>
+                    </section>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script>
+        let isRegisteredUser = false;
+        const maxProfilePhotoDataLength = 700000;
+        let profilePhotoData = '';
+        let profilePhotoCrop = { zoom: 1, x: 50, y: 50 };
+        let photoDragPosition = null;
+        const inputs = {
+            name: document.getElementById('input-name'),
+            email: document.getElementById('input-email'),
+            phone: document.getElementById('input-phone'),
+            location: document.getElementById('input-location'),
+            summary: document.getElementById('input-summary'),
+            education: document.getElementById('input-education'),
+            educationSchool: document.getElementById('input-education-school'),
+            educationDates: document.getElementById('input-education-dates'),
+            skills: document.getElementById('input-skills'),
+            jobTitle: document.getElementById('input-job-title'),
+            company: document.getElementById('input-company'),
+            dates: document.getElementById('input-dates'),
+            jobDesc: document.getElementById('input-job-desc')
+        };
+        const extraLists = {
+            experience: document.getElementById('experience-extra-list'),
+            education: document.getElementById('education-extra-list'),
+            project: document.getElementById('project-extra-list'),
+            link: document.getElementById('link-extra-list')
+        };
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.form-section').forEach(section => section.style.display = 'none');
+            document.querySelectorAll('.nav-links li').forEach(link => link.classList.remove('active'));
+            document.getElementById('section-' + tabName).style.display = 'block';
+            document.getElementById('tab-' + tabName).classList.add('active');
+        }
+
+        function makeField(labelText, fieldName, placeholder, multiline = false) {
+            const group = document.createElement('div');
+            group.className = 'input-group';
+            const label = document.createElement('label');
+            label.textContent = labelText;
+            const field = document.createElement(multiline ? 'textarea' : 'input');
+            if (!multiline) field.type = fieldName === 'url' ? 'url' : 'text';
+            if (multiline) field.rows = 3;
+            field.dataset.field = fieldName;
+            field.placeholder = placeholder;
+            group.append(label, field);
+            return group;
+        }
+
+        function createEntry(type, values = {}) {
+            const entry = document.createElement('div');
+            entry.className = 'repeatable-entry';
+            entry.dataset.entryType = type;
+            const fields = {
+                experience: [
+                    ['Job Title', 'title', 'e.g. Frontend Engineer'],
+                    ['Company', 'company', 'e.g. Tech Corp'],
+                    ['Dates', 'dates', 'e.g. 2021 - Present'],
+                    ['Achievements', 'description', 'One achievement per line', true]
+                ],
+                education: [
+                    ['Degree / Education', 'degree', 'e.g. Bachelor of Science'],
+                    ['School / Institution', 'school', 'e.g. City University'],
+                    ['Dates', 'dates', 'e.g. 2022 - 2025']
+                ],
+                project: [
+                    ['Project Name', 'title', 'e.g. Personal Portfolio'],
+                    ['Project Link (optional)', 'url', 'https://example.com'],
+                    ['Description', 'description', 'What did you build?', true]
+                ],
+                link: [
+                    ['Link Name', 'title', 'e.g. GitHub'],
+                    ['URL', 'url', 'https://github.com/username']
+                ]
+            }[type];
+
+            fields.forEach(([label, field, placeholder, multiline]) => {
+                const wrapper = makeField(label, field, placeholder, multiline);
+                const control = wrapper.querySelector('[data-field]');
+                control.value = values[field] || '';
+                entry.appendChild(wrapper);
+            });
+
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.className = 'btn-small btn-delete remove-entry';
+            remove.textContent = 'Remove';
+            remove.addEventListener('click', () => {
+                entry.remove();
+                updatePreview();
+            });
+            entry.appendChild(remove);
+            return entry;
+        }
+
+        function readEntry(entry) {
+            return Object.fromEntries(
+                [...entry.querySelectorAll('[data-field]')].map(field => [field.dataset.field, field.value.trim()])
+            );
+        }
+
+        function isEntryFilled(entry) {
+            return Object.values(entry).some(value => value.length > 0);
+        }
+
+        function collectCvData() {
+            const data = {
+                name: inputs.name.value.trim(),
+                email: inputs.email.value.trim(),
+                phone: inputs.phone.value.trim(),
+                location: inputs.location.value.trim(),
+                summary: inputs.summary.value.trim(),
+                education: inputs.education.value.trim(),
+                skills: inputs.skills.value.trim(),
+                jobTitle: inputs.jobTitle.value.trim(),
+                company: inputs.company.value.trim(),
+                dates: inputs.dates.value.trim(),
+                jobDesc: inputs.jobDesc.value.trim(),
+                profilePhotoData,
+                profilePhotoCrop: { ...profilePhotoCrop }
+            };
+
+            if (isRegisteredUser) {
+                const educationList = [{
+                    degree: data.education,
+                    school: inputs.educationSchool.value.trim(),
+                    dates: inputs.educationDates.value.trim()
+                }, ...[...extraLists.education.children].map(readEntry)].filter(isEntryFilled);
+                const experienceList = [{
+                    title: data.jobTitle,
+                    company: data.company,
+                    dates: data.dates,
+                    description: data.jobDesc
+                }, ...[...extraLists.experience.children].map(readEntry)].filter(isEntryFilled);
+
+                data.advancedData = {
+                    educationList,
+                    experienceList,
+                    projects: [...extraLists.project.children].map(readEntry).filter(isEntryFilled),
+                    portfolioLinks: [...extraLists.link.children].map(readEntry).filter(isEntryFilled),
+                    profilePhotoData,
+                    profilePhotoCrop: { ...profilePhotoCrop }
+                };
+            }
+            return data;
+        }
+
+        function appendText(parent, tagName, text, className) {
+            const element = document.createElement(tagName);
+            element.textContent = text;
+            if (className) element.className = className;
+            parent.appendChild(element);
+            return element;
+        }
+
+        function setSectionVisible(section, visible) {
+            section.style.display = visible ? '' : 'none';
+        }
+
+        function applyPhotoCrop(frame, image) {
+            if (!profilePhotoData || !image.naturalWidth || !image.naturalHeight) return;
+            const frameWidth = frame.clientWidth;
+            const frameHeight = frame.clientHeight;
+            const scale = Math.max(frameWidth / image.naturalWidth, frameHeight / image.naturalHeight)
+                * profilePhotoCrop.zoom;
+            const imageWidth = image.naturalWidth * scale;
+            const imageHeight = image.naturalHeight * scale;
+            const overflowX = Math.max(0, imageWidth - frameWidth);
+            const overflowY = Math.max(0, imageHeight - frameHeight);
+
+            image.style.width = `${imageWidth}px`;
+            image.style.height = `${imageHeight}px`;
+            image.style.left = `${-overflowX * profilePhotoCrop.x / 100}px`;
+            image.style.top = `${-overflowY * profilePhotoCrop.y / 100}px`;
+        }
+
+        function applyPhotoCrops() {
+            applyPhotoCrop(
+                document.getElementById('photo-crop-frame'),
+                document.getElementById('photo-crop-preview')
+            );
+            applyPhotoCrop(
+                document.getElementById('preview-photo-frame'),
+                document.getElementById('preview-photo')
+            );
+        }
+
+        function safeWebUrl(value) {
+            try {
+                const url = new URL(value);
+                return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : '';
+            } catch {
+                return '';
+            }
+        }
+
+        function updatePreview() {
+            const data = collectCvData();
+            document.getElementById('preview-name').textContent = data.name || 'Your Name';
+            const photoPreview = document.getElementById('preview-photo');
+            document.getElementById('preview-photo-frame').style.display = data.profilePhotoData ? '' : 'none';
+            const cropPreview = document.getElementById('photo-crop-preview');
+            document.getElementById('photo-crop-controls').style.display = data.profilePhotoData ? '' : 'none';
+            document.getElementById('remove-photo-btn').style.display = data.profilePhotoData ? '' : 'none';
+            [cropPreview, photoPreview].forEach(image => {
+                if (image.getAttribute('src') !== data.profilePhotoData) {
+                    if (data.profilePhotoData) image.src = data.profilePhotoData;
+                    else image.removeAttribute('src');
+                }
+            });
+            applyPhotoCrops();
+            const contacts = [data.email, data.phone, data.location].filter(Boolean);
+            document.getElementById('preview-contact').textContent = contacts.join(' • ') || 'Email • Phone • Location';
+            setSectionVisible(document.getElementById('preview-contact-section'), contacts.length > 0);
+
+            const summary = document.getElementById('preview-summary');
+            summary.textContent = data.summary;
+            setSectionVisible(document.getElementById('preview-summary-section'), Boolean(data.summary));
+
+            const experienceList = isRegisteredUser
+                ? data.advancedData.experienceList
+                : [{
+                    title: data.jobTitle,
+                    company: data.company,
+                    dates: data.dates,
+                    description: data.jobDesc
+                }].filter(isEntryFilled);
+            const experiencePreview = document.getElementById('preview-experience-list');
+            experiencePreview.replaceChildren();
+            experienceList.forEach(item => {
+                const block = document.createElement('div');
+                block.className = 'cv-item';
+                const heading = document.createElement('div');
+                heading.className = 'cv-item-header';
+                appendText(heading, 'h4', item.title || '');
+                appendText(heading, 'span', item.dates || '');
+                block.appendChild(heading);
+                if (item.company) appendText(block, 'p', item.company, 'cv-company');
+                if (item.description) {
+                    const bullets = item.description.split('\n').map(line => line.trim()).filter(Boolean);
+                    if (bullets.length) {
+                        const list = document.createElement('ul');
+                        bullets.forEach(bullet => appendText(list, 'li', bullet));
+                        block.appendChild(list);
+                    }
+                }
+                experiencePreview.appendChild(block);
+            });
+            setSectionVisible(document.getElementById('preview-experience-section'), experienceList.length > 0);
+
+            const educationList = isRegisteredUser
+                ? data.advancedData.educationList
+                : [{ degree: data.education }].filter(isEntryFilled);
+            const educationPreview = document.getElementById('preview-education-list');
+            educationPreview.replaceChildren();
+            educationList.forEach(item => {
+                const block = document.createElement('div');
+                block.className = 'cv-item';
+                appendText(block, 'h4', item.degree || '');
+                if (item.school) appendText(block, 'p', item.school);
+                if (item.dates) appendText(block, 'p', item.dates);
+                educationPreview.appendChild(block);
+            });
+            setSectionVisible(document.getElementById('preview-education-section'), educationList.length > 0);
+
+            const projectPreview = document.getElementById('preview-project-list');
+            projectPreview.replaceChildren();
+            const projects = isRegisteredUser ? data.advancedData.projects : [];
+            projects.forEach(project => {
+                const block = document.createElement('div');
+                block.className = 'cv-item';
+                appendText(block, 'h4', project.title || '');
+                if (project.description) appendText(block, 'p', project.description);
+                const url = safeWebUrl(project.url);
+                if (url) {
+                    const link = appendText(block, 'a', project.url);
+                    link.href = url;
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                }
+                projectPreview.appendChild(block);
+            });
+            setSectionVisible(document.getElementById('preview-projects-section'), projects.length > 0);
+
+            const linkPreview = document.getElementById('preview-link-list');
+            linkPreview.replaceChildren();
+            const links = isRegisteredUser ? data.advancedData.portfolioLinks : [];
+            links.forEach(item => {
+                const url = safeWebUrl(item.url);
+                if (!url) return;
+                const link = appendText(linkPreview, 'a', `${item.title || item.url}: ${item.url}`);
+                link.href = url;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                link.className = 'cv-profile-link';
+            });
+            setSectionVisible(document.getElementById('preview-links-section'), linkPreview.childElementCount > 0);
+
+            const skillsPreview = document.getElementById('preview-skills');
+            skillsPreview.replaceChildren();
+            data.skills.split(',').map(skill => skill.trim()).filter(Boolean).forEach(skill => {
+                appendText(skillsPreview, 'li', skill);
+            });
+            setSectionVisible(document.getElementById('preview-skills-section'), skillsPreview.childElementCount > 0);
+
+            if (!isRegisteredUser) {
+                localStorage.setItem('guestCVData', JSON.stringify(data));
+            }
+        }
+
+        function applyCvData(data) {
+            inputs.name.value = data.name || '';
+            inputs.email.value = data.email || '';
+            inputs.phone.value = data.phone || '';
+            inputs.location.value = data.location || '';
+            inputs.summary.value = data.summary || '';
+            inputs.education.value = data.education || '';
+            inputs.skills.value = data.skills || '';
+            inputs.jobTitle.value = data.jobTitle || '';
+            inputs.company.value = data.company || '';
+            inputs.dates.value = data.dates || '';
+            inputs.jobDesc.value = data.jobDesc || '';
+
+            const advancedData = typeof data.advancedData === 'string'
+                ? JSON.parse(data.advancedData || '{}')
+                : data.advancedData || {};
+            const savedPhoto = data.profilePhotoData || advancedData.profilePhotoData || '';
+            profilePhotoData = typeof savedPhoto === 'string'
+                && savedPhoto.startsWith('data:image/jpeg;base64,')
+                && savedPhoto.length <= maxProfilePhotoDataLength
+                ? savedPhoto
+                : '';
+            const savedCrop = data.profilePhotoCrop || advancedData.profilePhotoCrop || {};
+            const savedZoom = Number(savedCrop.zoom);
+            const savedX = Number(savedCrop.x);
+            const savedY = Number(savedCrop.y);
+            profilePhotoCrop = {
+                zoom: Number.isFinite(savedZoom) ? Math.min(2.5, Math.max(1, savedZoom)) : 1,
+                x: Number.isFinite(savedX) ? Math.min(100, Math.max(0, savedX)) : 50,
+                y: Number.isFinite(savedY) ? Math.min(100, Math.max(0, savedY)) : 50
+            };
+            document.getElementById('photo-zoom').value = profilePhotoCrop.zoom;
+            document.getElementById('photo-horizontal').value = profilePhotoCrop.x;
+            document.getElementById('photo-vertical').value = profilePhotoCrop.y;
+            document.getElementById('input-photo').value = '';
+            document.getElementById('photo-error').textContent = '';
+            const educationList = Array.isArray(advancedData.educationList) ? advancedData.educationList : [];
+            const experienceList = Array.isArray(advancedData.experienceList) ? advancedData.experienceList : [];
+            inputs.educationSchool.value = educationList[0]?.school || '';
+            inputs.educationDates.value = educationList[0]?.dates || '';
+            if (educationList[0]) inputs.education.value = educationList[0].degree || inputs.education.value;
+            if (experienceList[0]) {
+                inputs.jobTitle.value = experienceList[0].title || '';
+                inputs.company.value = experienceList[0].company || '';
+                inputs.dates.value = experienceList[0].dates || '';
+                inputs.jobDesc.value = experienceList[0].description || '';
+            }
+
+            Object.values(extraLists).forEach(list => list.replaceChildren());
+            educationList.slice(1).forEach(item => extraLists.education.appendChild(createEntry('education', item)));
+            experienceList.slice(1).forEach(item => extraLists.experience.appendChild(createEntry('experience', item)));
+            (Array.isArray(advancedData.projects) ? advancedData.projects : [])
+                .forEach(item => extraLists.project.appendChild(createEntry('project', item)));
+            (Array.isArray(advancedData.portfolioLinks) ? advancedData.portfolioLinks : [])
+                .forEach(item => extraLists.link.appendChild(createEntry('link', item)));
+            updatePreview();
+        }
+
+        async function downloadPDF() {
+            if (typeof html2pdf !== 'function') {
+                alert('PDF generator could not load. Check your internet connection and try again.');
+                return;
+            }
+            const options = {
+                margin: 0,
+                filename: 'My_CV.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+            try {
+                const blob = await html2pdf().set(options).from(document.querySelector('.paper')).outputPdf('blob');
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = options.filename;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+            } catch (error) {
+                console.error('PDF generation error:', error);
+                alert('Failed to generate PDF. Please try again.');
+            }
+        }
+
+        async function saveToDatabase() {
+            if (!isRegisteredUser) return;
+            const params = new URLSearchParams(window.location.search);
+            const data = collectCvData();
+            const payload = {
+                ...data,
+                cvId: params.get('cvId'),
+                cvType: params.get('type') || 'experienced'
+            };
+            try {
+                const response = await apiRequest('/api/save-cv', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Failed to save CV.');
+                params.set('cvId', result.cvId);
+                history.replaceState(null, '', `${window.location.pathname}?${params.toString()}`);
+                alert(result.message || 'CV saved to your account!');
+            } catch (error) {
+                console.error('CV save error:', error);
+                alert(error.message || 'Failed to save CV.');
+            }
+        }
+
+        document.querySelectorAll('[data-add-entry]').forEach(button => {
+            button.addEventListener('click', () => {
+                const type = button.dataset.addEntry;
+                extraLists[type].appendChild(createEntry(type));
+                updatePreview();
+            });
+        });
+        document.getElementById('download-btn').addEventListener('click', downloadPDF);
+        document.getElementById('save-btn').addEventListener('click', saveToDatabase);
+        document.querySelector('.editor-panel').addEventListener('input', updatePreview);
+        document.getElementById('input-photo').addEventListener('change', async event => {
+            const photoInput = event.currentTarget;
+            const [file] = photoInput.files;
+            const error = document.getElementById('photo-error');
+            error.textContent = '';
+            if (!file) return;
+            if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+                error.textContent = 'Choose a JPG, PNG, or WebP image.';
+                photoInput.value = '';
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                error.textContent = 'Choose an image smaller than 5 MB.';
+                photoInput.value = '';
+                return;
+            }
+            try {
+                const bitmap = await createImageBitmap(file);
+                const canvas = document.createElement('canvas');
+                const scale = Math.min(600 / bitmap.width, 771 / bitmap.height, 1);
+                canvas.width = Math.round(bitmap.width * scale);
+                canvas.height = Math.round(bitmap.height * scale);
+                canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+                bitmap.close();
+                const compressedPhoto = canvas.toDataURL('image/jpeg', 0.82);
+                if (compressedPhoto.length > maxProfilePhotoDataLength) {
+                    error.textContent = 'This photo is still too large after compression. Choose another image.';
+                    photoInput.value = '';
+                    return;
+                }
+                profilePhotoData = compressedPhoto;
+                profilePhotoCrop = { zoom: 1, x: 50, y: 50 };
+                document.getElementById('photo-zoom').value = profilePhotoCrop.zoom;
+                document.getElementById('photo-horizontal').value = profilePhotoCrop.x;
+                document.getElementById('photo-vertical').value = profilePhotoCrop.y;
+                updatePreview();
+            } catch (imageError) {
+                console.error('CV photo processing error:', imageError);
+                error.textContent = 'Could not load this image. Please choose another one.';
+                photoInput.value = '';
+            }
+        });
+        const cropControls = [
+            ['photo-zoom', 'zoom'],
+            ['photo-horizontal', 'x'],
+            ['photo-vertical', 'y']
+        ];
+        cropControls.forEach(([id, property]) => {
+            document.getElementById(id).addEventListener('input', event => {
+                profilePhotoCrop[property] = Number(event.currentTarget.value);
+                updatePreview();
+            });
+        });
+        document.getElementById('photo-crop-preview').addEventListener('load', applyPhotoCrops);
+        document.getElementById('preview-photo').addEventListener('load', applyPhotoCrops);
+        document.getElementById('photo-crop-frame').addEventListener('pointerdown', event => {
+            if (!profilePhotoData) return;
+            photoDragPosition = { x: event.clientX, y: event.clientY };
+            event.currentTarget.setPointerCapture(event.pointerId);
+        });
+        document.getElementById('photo-crop-frame').addEventListener('pointermove', event => {
+            if (!photoDragPosition) return;
+            const frame = event.currentTarget.getBoundingClientRect();
+            const image = document.getElementById('photo-crop-preview');
+            const overflowX = Math.max(0, image.clientWidth - event.currentTarget.clientWidth);
+            const overflowY = Math.max(0, image.clientHeight - event.currentTarget.clientHeight);
+            if (overflowX > 0) {
+                profilePhotoCrop.x = Math.min(100, Math.max(0,
+                    profilePhotoCrop.x - (event.clientX - photoDragPosition.x) / overflowX * 100));
+            }
+            if (overflowY > 0) {
+                profilePhotoCrop.y = Math.min(100, Math.max(0,
+                    profilePhotoCrop.y - (event.clientY - photoDragPosition.y) / overflowY * 100));
+            }
+            photoDragPosition = { x: event.clientX, y: event.clientY };
+            document.getElementById('photo-horizontal').value = profilePhotoCrop.x;
+            document.getElementById('photo-vertical').value = profilePhotoCrop.y;
+            updatePreview();
+        });
+        document.getElementById('photo-crop-frame').addEventListener('pointerup', () => {
+            photoDragPosition = null;
+        });
+        document.getElementById('photo-crop-frame').addEventListener('pointercancel', () => {
+            photoDragPosition = null;
+        });
+        document.getElementById('reset-photo-crop-btn').addEventListener('click', () => {
+            profilePhotoCrop = { zoom: 1, x: 50, y: 50 };
+            document.getElementById('photo-zoom').value = profilePhotoCrop.zoom;
+            document.getElementById('photo-horizontal').value = profilePhotoCrop.x;
+            document.getElementById('photo-vertical').value = profilePhotoCrop.y;
+            updatePreview();
+        });
+        document.getElementById('remove-photo-btn').addEventListener('click', () => {
+            profilePhotoData = '';
+            profilePhotoCrop = { zoom: 1, x: 50, y: 50 };
+            document.getElementById('input-photo').value = '';
+            document.getElementById('photo-error').textContent = '';
+            updatePreview();
+        });
+        function setRegisteredUser(session) {
+            isRegisteredUser = Boolean(session);
+            document.querySelectorAll('.advanced-only').forEach(element => {
+                element.style.display = isRegisteredUser ? '' : 'none';
+            });
+            document.getElementById('save-btn').style.display = isRegisteredUser ? 'block' : 'none';
+            if (isRegisteredUser) {
+                document.getElementById('exit-btn').textContent = '← Back to Dashboard';
+                document.getElementById('exit-btn').style.color = '#3b82f6';
+                document.getElementById('exit-btn').style.borderColor = '#3b82f6';
+            }
+        }
+        document.getElementById('exit-btn').addEventListener('click', () => {
+            window.location.href = isRegisteredUser ? 'home.html' : 'index.html';
+        });
+
+        window.addEventListener('load', async () => {
+            const params = new URLSearchParams(window.location.search);
+            const cvId = params.get('cvId');
+            const cvType = params.get('type');
+            const forceGuest = params.get('mode') === 'guest';
+            if (cvType === 'student') {
+                document.getElementById('nav-item-experience').style.display = 'none';
+            }
+
+            try {
+                if (!forceGuest) {
+                    const sessionResponse = await apiRequest('/api/session');
+                    if (sessionResponse.ok) {
+                        const session = await sessionResponse.json();
+                        setRegisteredUser(session);
+                    } else if (cvId) {
+                        alert('Please log in to open this saved CV.');
+                        window.location.replace('Index.html');
+                        return;
+                    }
+                }
+
+                if (cvId && isRegisteredUser) {
+                    const response = await apiRequest(`/api/cvs/${encodeURIComponent(cvId)}`);
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.error || 'Could not load this CV.');
+                    applyCvData(data);
+                } else if (!isRegisteredUser) {
+                    const guestData = localStorage.getItem('guestCVData');
+                    if (guestData) applyCvData(JSON.parse(guestData));
+                }
+            } catch (error) {
+                console.error('CV load error:', error);
+                alert(error.message || 'Could not load this CV.');
+            }
+            updatePreview();
+            switchTab('personal');
+        });
+    </script>

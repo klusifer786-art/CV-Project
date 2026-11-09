@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="api-base-url" content="http://localhost:3000">
+    <title>CV Generator - Login</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="login-wrapper">
+        <!-- Header Section -->
+        <div class="header">
+            <!-- Replace src with your actual logo image path -->
+            <div class="logo-placeholder">
+                <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="Logo">
+            </div>
+            <h1>Welcome to CV Generator</h1>
+            <p>Sign in to get started</p>
+        </div>
+
+        <!-- Form Card -->
+        <div class="card">
+                     <form action="#">
+                <!-- Email OR Username Input -->
+                <div class="input-group">
+                    <label for="email">Email or Username</label>
+                    <input type="text" id="email" placeholder="Enter email or username">
+                </div>
+
+                <!-- Password Input -->
+                <div class="input-group">
+                    <div class="label-row">
+                        <label for="password">Password</label>
+                        <a href="forgot-password.html" class="forgot-link">Forgot Password?</a>
+                    </div>
+                    <input type="password" id="password" placeholder="••••••••">
+                </div>
+
+                
+
+                <!-- Login Button -->
+                <button type="submit" class="btn-primary">Log in</button>
+
+                <!-- Divider -->
+                <div class="divider">
+                    <span>Or</span>
+                </div>
+
+                <!-- Guest Button -->
+                        <a href="dashboard.html?mode=guest" class="btn-secondary" style="display: block; text-align: center; text-decoration: none; margin-top: 15px;">
+    Continue in Guest Mode
+</a>
+                
+                <p class="disclaimer">
+                    No account needed. You can create and download a CV, but your progress won't be saved.
+                </p>
+            </form>
+        </div>
+
+        <!-- Footer Link -->
+        <div class="footer-link">
+            Don't have an account? <a href="register.html">Create one</a>
+    </div>
+    <script src="auth.js"></script>
+    <script>
+        // Listen for the login form submission
+        document.querySelector('form').addEventListener('submit', async (e) => {
+            e.preventDefault(); // Stop the page from refreshing
+
+            // Get the values from the inputs
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await apiRequest('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ loginId: email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    try {
+                        localStorage.setItem('loggedInUser', data.userName);
+                        localStorage.setItem('loggedInUsername', data.username);
+                        localStorage.setItem('loggedInEmail', data.email);
+                        localStorage.removeItem('loggedInUserId');
+                    } catch (error) {
+                        console.warn('Could not cache login details:', error);
+                    }
+
+                    window.location.replace('home.html');
+                } else {
+                    // Error (wrong password or email)
+                    alert(data.error);
+                }
+            } catch (error) {
+                console.error("Error connecting to server:", error);
+                alert("Could not connect to the server. Is it running?");
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+{
+  "name": "cv-project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --test",
+    "test:api": "node --test test/api.test.js",
+    "test:ui": "node --test test/ui.test.js",
+    "test:setup": "playwright install chromium"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.9",
+    "express": "^5.3.0",
+    "nodemailer": "^10.3.1",
+    "sqlite3": "^6.0.1"
+  },
+  "allowScripts": {
+    "sqlite3@6.0.1": true
+  },
+  "devDependencies": {
+    "playwright": "^1.65.0"
+  }
+}
