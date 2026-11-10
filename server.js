@@ -6,8 +6,16 @@ const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
+const path = require('path');
 
 const app = express();
+// Serve static files from the current directory
+app.use(express.static(__dirname));
+
+// Serve the login page at the root and the lowercase links used across the app.
+app.get(['/', '/index.html'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'Index.html'));
+});
 const sessionCookieName = 'cv_session';
 const sessionDurationMs = 7 * 24 * 60 * 60 * 1000;
 const allowedOrigins = (process.env.FRONTEND_ORIGINS || process.env.FRONTEND_ORIGIN || (

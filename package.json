@@ -7,7 +7,9 @@
     "test": "node --test",
     "test:api": "node --test test/api.test.js",
     "test:ui": "node --test test/ui.test.js",
-    "test:setup": "playwright install chromium"
+    "test:setup": "playwright install chromium",
+    "start": "node server.js"
+
   },
   "keywords": [],
   "author": "",

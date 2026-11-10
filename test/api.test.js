@@ -126,6 +126,15 @@ after(async () => {
     if (databaseDirectory) fs.rmSync(databaseDirectory, { recursive: true, force: true });
 });
 
+test('root and lowercase login URLs serve the login page', async () => {
+    for (const route of ['/', '/index.html']) {
+        const response = await fetch(`${serverUrl}${route}`);
+        assert.equal(response.status, 200);
+        assert.match(response.headers.get('content-type'), /text\/html/);
+        assert.match(await response.text(), /CV Generator - Login/);
+    }
+});
+
 test('server sessions protect accounts and saved CVs end to end', async t => {
     const client = createApiClient();
     const otherClient = createApiClient();

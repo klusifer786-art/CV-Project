@@ -6,6 +6,8 @@
     const loopbackHosts = new Set(['localhost', '127.0.0.1']);
     if (loopbackHosts.has(window.location.hostname) && loopbackHosts.has(configuredApiUrl.hostname)) {
         configuredApiUrl.hostname = window.location.hostname;
+    } else if (!loopbackHosts.has(window.location.hostname) && loopbackHosts.has(configuredApiUrl.hostname)) {
+        configuredApiUrl.href = window.location.origin;
     }
     const apiBaseUrl = configuredApiUrl.href.replace(/\/+$/, '');
     const unsafeMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
